@@ -78,6 +78,12 @@ import {
 /** Default debounce interval when typing letters to select an option. */
 const DEFAULT_TYPEAHEAD_DEBOUNCE_INTERVAL = 200;
 
+interface FoodItem<V = string> {
+  viewValue: string;
+  value: V;
+  disabled?: boolean;
+}
+
 describe('MatSelect', () => {
   let overlayContainerElement: HTMLElement;
   let dir: {value: 'ltr' | 'rtl'; change: Observable<string>};
@@ -90,7 +96,10 @@ describe('MatSelect', () => {
    * @param declarations Components to declare for this block
    * @param providers Additional providers for this block
    */
-  function configureMatSelectTestingModule(declarations: any[], providers: Provider[] = []) {
+  function configureMatSelectTestingModule(
+    declarations: (new (...args: unknown[]) => unknown)[],
+    providers: Provider[] = [],
+  ) {
     TestBed.configureTestingModule({
       imports: [
         MatFormFieldModule,
@@ -1374,7 +1383,7 @@ describe('MatSelect', () => {
           multiFixture.detectChanges();
 
           multiFixture.componentInstance.control.setValue([
-            multiFixture.componentInstance.foods[2].value,
+            multiFixture.componentInstance.foods[2].value!,
           ]);
           multiFixture.detectChanges();
 
@@ -4364,7 +4373,7 @@ describe('MatSelect', () => {
 
     it('should throw an exception when trying to set a non-array value', () => {
       expect(() => {
-        testInstance.control.setValue('not-an-array' as any);
+        testInstance.control.setValue('not-an-array' as unknown as string[]);
       }).toThrowError(wrappedErrorMessage(getMatSelectNonArrayValueError()));
     });
 
@@ -4773,7 +4782,7 @@ describe('MatSelect', () => {
   standalone: false,
 })
 class BasicSelect {
-  foods: any[] = [
+  foods: FoodItem<string | null>[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos', disabled: true},
@@ -4817,7 +4826,7 @@ class BasicSelect {
   standalone: false,
 })
 class NgModelSelect {
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -4867,7 +4876,7 @@ class ManySelects {}
 })
 class NgIfSelect {
   isShowing = false;
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -4919,7 +4928,7 @@ class SelectWithChangeEvent {
   standalone: false,
 })
 class SelectInitWithoutOptions {
-  foods: any[];
+  foods?: FoodItem[];
   control = new FormControl('pizza-1');
 
   @ViewChild(MatSelect) select: MatSelect;
@@ -4949,8 +4958,8 @@ class SelectInitWithoutOptions {
 class CustomSelectAccessor implements ControlValueAccessor {
   @ViewChild(MatSelect) select: MatSelect;
 
-  writeValue: (value?: any) => void = () => {};
-  registerOnChange: (changeFn?: (value: any) => void) => void = () => {};
+  writeValue: (value?: unknown) => void = () => {};
+  registerOnChange: (changeFn?: (value: unknown) => void) => void = () => {};
   registerOnTouched: (touchedFn?: () => void) => void = () => {};
 }
 
@@ -5011,7 +5020,7 @@ class ThrowsErrorOnInit implements OnInit {
   standalone: false,
 })
 class BasicSelectOnPush {
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5035,7 +5044,7 @@ class BasicSelectOnPush {
 })
 class BasicSelectOnPushPreselected {
   @ViewChild(MatSelect) select: MatSelect;
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5061,7 +5070,7 @@ class FloatLabelSelect {
   floatLabel: FloatLabelType | null = 'auto';
   control = new FormControl('');
   placeholder = 'Food I want to eat right now';
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5085,7 +5094,7 @@ class FloatLabelSelect {
   standalone: false,
 })
 class MultiSelect {
-  foods: any[] = [
+  foods: FoodItem<string | null>[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5184,15 +5193,15 @@ class BasicSelectWithTheming {
   standalone: false,
 })
 class ResetValuesSelect {
-  foods: any[] = [
+  foods: FoodItem<string | boolean | undefined | null>[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
     {value: false, viewValue: 'Falsy'},
-    {viewValue: 'Undefined'},
+    {viewValue: 'Undefined'} as FoodItem,
     {value: null, viewValue: 'Null'},
   ];
-  control = new FormControl('' as string | boolean | null | undefined);
+  control = new FormControl<string | boolean | undefined | null>('');
   canSelectNullableOptions = false;
 
   @ViewChild(MatSelect) select: MatSelect;
@@ -5211,7 +5220,7 @@ class ResetValuesSelect {
   standalone: false,
 })
 class FalsyValueSelect {
-  foods: any[] = [
+  foods: FoodItem<number>[] = [
     {value: 0, viewValue: 'Steak'},
     {value: 1, viewValue: 'Pizza'},
   ];
@@ -5316,7 +5325,7 @@ class SelectWithGroupsAndNgContainer {
   standalone: false,
 })
 class InvalidSelectInForm {
-  value: any;
+  value: undefined;
 }
 
 @Component({
@@ -5363,7 +5372,7 @@ class SelectInsideFormGroup {
 })
 class BasicSelectWithoutForms {
   selectedFood: string | null;
-  foods: any[] = [
+  foods: FoodItem<string | null>[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'sandwich-2', viewValue: 'Sandwich'},
@@ -5386,7 +5395,7 @@ class BasicSelectWithoutForms {
 })
 class BasicSelectWithoutFormsPreselected {
   selectedFood = 'pizza-1';
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
   ];
@@ -5408,7 +5417,7 @@ class BasicSelectWithoutFormsPreselected {
 })
 class BasicSelectWithoutFormsMultiple {
   selectedFoods: string[];
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'sandwich-2', viewValue: 'Sandwich'},
@@ -5434,7 +5443,7 @@ class BasicSelectWithoutFormsMultiple {
   standalone: false,
 })
 class SelectWithCustomTrigger {
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
   ];
@@ -5462,7 +5471,7 @@ class NgModelCompareWithSelect {
     {value: 'tacos-2', viewValue: 'Tacos'},
   ];
   selectedFood: {value: string; viewValue: string} = {value: 'pizza-1', viewValue: 'Pizza'};
-  comparator: ((f1: any, f2: any) => boolean) | null = this.compareByValue;
+  comparator: ((f1: FoodItem, f2: FoodItem) => boolean) | null = this.compareByValue;
 
   @ViewChild(MatSelect) select: MatSelect;
   @ViewChildren(MatOption) options: QueryList<MatOption>;
@@ -5479,11 +5488,11 @@ class NgModelCompareWithSelect {
     this.comparator = null;
   }
 
-  compareByValue(f1: any, f2: any) {
+  compareByValue(f1: FoodItem, f2: FoodItem) {
     return f1 && f2 && f1.value === f2.value;
   }
 
-  compareByReference(f1: any, f2: any) {
+  compareByReference(f1: FoodItem, f2: FoodItem) {
     return f1 === f2;
   }
 
@@ -5505,7 +5514,7 @@ class NgModelCompareWithSelect {
 class CustomErrorBehaviorSelect {
   @ViewChild(MatSelect) select: MatSelect;
   control = new FormControl('');
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
   ];
@@ -5525,7 +5534,7 @@ class CustomErrorBehaviorSelect {
   standalone: false,
 })
 class SingleSelectWithPreselectedArrayValues {
-  foods: any[] = [
+  foods: FoodItem<string[]>[] = [
     {value: ['steak-0', 'steak-1'], viewValue: 'Steak'},
     {value: ['pizza-1', 'pizza-2'], viewValue: 'Pizza'},
     {value: ['tacos-2', 'tacos-3'], viewValue: 'Tacos'},
@@ -5551,7 +5560,7 @@ class SingleSelectWithPreselectedArrayValues {
   standalone: false,
 })
 class SelectWithoutOptionCentering {
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5721,7 +5730,7 @@ class SelectInsideDynamicFormGroup {
   standalone: false,
 })
 class BasicSelectWithFirstAndLastOptionDisabled {
-  foods: any[] = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak', disabled: true},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},
@@ -5770,7 +5779,7 @@ class BasicSelectWithFirstAndLastOptionDisabled {
   standalone: false,
 })
 class SelectInsideAModal {
-  foods = [
+  foods: FoodItem[] = [
     {value: 'steak-0', viewValue: 'Steak'},
     {value: 'pizza-1', viewValue: 'Pizza'},
     {value: 'tacos-2', viewValue: 'Tacos'},

@@ -154,13 +154,15 @@ export const MAT_SELECT_SCROLL_STRATEGY_PROVIDER = {
  */
 export const MAT_SELECT_TRIGGER = new InjectionToken<MatSelectTrigger>('MatSelectTrigger');
 
+type MatSelectValue<T> = T | T[];
+
 /** Change event object that is emitted when the select value has changed. */
-export class MatSelectChange<T = any> {
+export class MatSelectChange<T = unknown> {
   constructor(
     /** Reference to the select that emitted the change event. */
-    public source: MatSelect,
+    public source: MatSelect<T>,
     /** Current value of the select that emitted the event. */
-    public value: T,
+    public value: MatSelectValue<T>,
   ) {}
 }
 
@@ -199,7 +201,7 @@ export class MatSelectChange<T = any> {
   ],
   imports: [CdkOverlayOrigin, CdkConnectedOverlay, NgClass],
 })
-export class MatSelect
+export class MatSelect<T = unknown>
   implements
     AfterContentInit,
     OnChanges,
@@ -207,7 +209,7 @@ export class MatSelect
     OnInit,
     DoCheck,
     ControlValueAccessor,
-    MatFormFieldControl<any>
+    MatFormFieldControl<MatSelectValue<T>>
 {
   protected _viewportRuler = inject(ViewportRuler);
   protected _changeDetectorRef = inject(ChangeDetectorRef);
@@ -225,7 +227,7 @@ export class MatSelect
   private _cleanupDetach: (() => void) | undefined;
 
   /** All of the defined select options. */
-  @ContentChildren(MatOption, {descendants: true}) options: QueryList<MatOption>;
+  @ContentChildren(MatOption<T>, {descendants: true}) options: QueryList<MatOption<T>>;
 
   // TODO(crisbeto): this is only necessary for the non-MDC select, but it's technically a
   // public API so we have to keep it. It should be deprecated and removed eventually.
@@ -301,7 +303,7 @@ export class MatSelect
   }
 
   /** Creates a change event object that should be emitted by the select. */
-  private _getChangeEvent(value: any) {
+  private _getChangeEvent(value: MatSelectValue<T>) {
     return new MatSelectChange(this, value);
   }
 
@@ -312,7 +314,7 @@ export class MatSelect
   private _panelOpen = false;
 
   /** Comparison function to specify which option is displayed. Defaults to object equality. */
-  private _compareWith = (o1: any, o2: any) => o1 === o2;
+  private _compareWith = (o1: MatSelectValue<T>, o2: MatSelectValue<T>) => o1 === o2;
 
   /** Unique id for this input. */
   private _uid = this._idGenerator.getId('mat-select-');
@@ -352,10 +354,10 @@ export class MatSelect
   @Input('aria-describedby') userAriaDescribedBy: string;
 
   /** Deals with the selection logic. */
-  _selectionModel: SelectionModel<MatOption>;
+  _selectionModel: SelectionModel<MatOption<T>>;
 
   /** Manages keyboard events for options in the panel. */
-  _keyManager: ActiveDescendantKeyManager<MatOption>;
+  _keyManager: ActiveDescendantKeyManager<MatOption<T>>;
 
   /** Ideal origin for the overlay panel. */
   _preferredOverlayOrigin: CdkOverlayOrigin | ElementRef | undefined;
@@ -364,7 +366,7 @@ export class MatSelect
   _overlayWidth: string | number;
 
   /** `View -> model callback called when value changes` */
-  _onChange: (value: any) => void = () => {};
+  _onChange: (value: MatSelectValue<T>) => void = () => {};
 
   /** `View -> model callback called when select has been touched` */
   _onTouched = () => {};
@@ -397,7 +399,7 @@ export class MatSelect
   protected _overlayDir: CdkConnectedOverlay;
 
   /** Classes to be passed to the select panel. Supports the same syntax as `ngClass`. */
-  @Input() panelClass: string | string[] | Set<string> | {[key: string]: any};
+  @Input() panelClass: string | string[] | Set<string> | {[key: string]: unknown};
 
   /** Whether the select is disabled. */
   @Input({transform: booleanAttribute})
@@ -474,7 +476,7 @@ export class MatSelect
   get compareWith() {
     return this._compareWith;
   }
-  set compareWith(fn: (o1: any, o2: any) => boolean) {
+  set compareWith(fn: (o1: MatSelectValue<T>, o2: MatSelectValue<T>) => boolean) {
     if (typeof fn !== 'function' && (typeof ngDevMode === 'undefined' || ngDevMode)) {
       throw getMatSelectNonFunctionValueError();
     }
@@ -487,17 +489,17 @@ export class MatSelect
 
   /** Value of the select control. */
   @Input()
-  get value(): any {
+  get value(): MatSelectValue<T> {
     return this._value;
   }
-  set value(newValue: any) {
+  set value(newValue: MatSelectValue<T>) {
     const hasAssigned = this._assignValue(newValue);
 
     if (hasAssigned) {
       this._onChange(newValue);
     }
   }
-  private _value: any;
+  private _value: MatSelectValue<T>;
 
   /** Aria label of the select. */
   @Input('aria-label') ariaLabel: string = '';
@@ -522,7 +524,7 @@ export class MatSelect
    * Function used to sort the values in a select in multiple mode.
    * Follows the same logic as `Array.prototype.sort`.
    */
-  @Input() sortComparator: (a: MatOption, b: MatOption, options: MatOption[]) => number;
+  @Input() sortComparator: (a: MatOption<T>, b: MatOption<T>, options: MatOption<T>[]) => number;
 
   /** Unique id of the element. */
   @Input()
@@ -562,7 +564,7 @@ export class MatSelect
   canSelectNullableOptions: boolean = this._defaultOptions?.canSelectNullableOptions ?? false;
 
   /** Combined stream of all of the child options' change events. */
-  readonly optionSelectionChanges: Observable<MatOptionSelectionChange> = defer(() => {
+  readonly optionSelectionChanges: Observable<MatOptionSelectionChange<T>> = defer(() => {
     const options = this.options;
 
     if (options) {
@@ -591,14 +593,16 @@ export class MatSelect
   );
 
   /** Event emitted when the selected value has been changed by the user. */
-  @Output() readonly selectionChange = new EventEmitter<MatSelectChange>();
+  @Output() readonly selectionChange = new EventEmitter<MatSelectChange<T>>();
 
   /**
    * Event that emits whenever the raw value of the select changes. This is here primarily
    * to facilitate the two-way binding for the `value` input.
    * @docs-private
    */
-  @Output() readonly valueChange: EventEmitter<any> = new EventEmitter<any>();
+  @Output() readonly valueChange: EventEmitter<MatSelectValue<T>> = new EventEmitter<
+    MatSelectValue<T>
+  >();
 
   constructor(...args: unknown[]);
 
@@ -635,7 +639,7 @@ export class MatSelect
   }
 
   ngOnInit() {
-    this._selectionModel = new SelectionModel<MatOption>(this.multiple);
+    this._selectionModel = new SelectionModel<MatOption<T>>(this.multiple);
     this.stateChanges.next();
     this._viewportRuler
       .change()
@@ -886,7 +890,7 @@ export class MatSelect
    *
    * @param value New value to be written to the model.
    */
-  writeValue(value: any): void {
+  writeValue(value: MatSelectValue<T>): void {
     this._assignValue(value);
   }
 
@@ -897,7 +901,7 @@ export class MatSelect
    *
    * @param fn Callback to be triggered when the value changes.
    */
-  registerOnChange(fn: (value: any) => void): void {
+  registerOnChange(fn: (value: MatSelectValue<T>) => void): void {
     this._onChange = fn;
   }
 
@@ -930,7 +934,7 @@ export class MatSelect
   }
 
   /** The currently selected option. */
-  get selected(): MatOption | MatOption[] {
+  get selected(): MatOption<T> | MatOption<T>[] {
     return this.multiple ? this._selectionModel?.selected || [] : this._selectionModel?.selected[0];
   }
 
@@ -998,7 +1002,7 @@ export class MatSelect
       if (selectedOption && previouslySelectedOption !== selectedOption) {
         // We set a duration on the live announcement, because we want the live element to be
         // cleared after a while so that users can't navigate to it using the arrow keys.
-        this._liveAnnouncer.announce((selectedOption as MatOption).viewValue, 10000);
+        this._liveAnnouncer.announce((selectedOption as MatOption<T>).viewValue, 10000);
       }
     }
   }
@@ -1111,7 +1115,7 @@ export class MatSelect
    * Sets the selected option based on a value. If no option can be
    * found with the designated value, the select trigger is cleared.
    */
-  private _setSelectionByValue(value: any | any[]): void {
+  private _setSelectionByValue(value: MatSelectValue<T>): void {
     this.options.forEach(option => option.setInactiveStyles());
     this._selectionModel.clear();
 
@@ -1120,10 +1124,10 @@ export class MatSelect
         throw getMatSelectNonArrayValueError();
       }
 
-      value.forEach((currentValue: any) => this._selectOptionByValue(currentValue));
+      (value as T[]).forEach((currentValue: T) => this._selectOptionByValue(currentValue));
       this._sortValues();
     } else {
-      const correspondingOption = this._selectOptionByValue(value);
+      const correspondingOption = this._selectOptionByValue(value as T);
 
       // Shift focus to the active item. Note that we shouldn't do this in multiple
       // mode, because we don't know what option the user interacted with last.
@@ -1143,8 +1147,8 @@ export class MatSelect
    * Finds and selects and option based on its value.
    * @returns Option that has the corresponding value.
    */
-  private _selectOptionByValue(value: any): MatOption | undefined {
-    const correspondingOption = this.options.find((option: MatOption) => {
+  private _selectOptionByValue(value: MatSelectValue<T>): MatOption<T> | undefined {
+    const correspondingOption = this.options.find((option: MatOption<T>) => {
       // Skip options that are already in the model. This allows us to handle cases
       // where the same primitive value is selected multiple times.
       if (this._selectionModel.isSelected(option)) {
@@ -1174,7 +1178,7 @@ export class MatSelect
   }
 
   /** Assigns a specific value to the select. Returns whether the value has changed. */
-  private _assignValue(newValue: any | any[]): boolean {
+  private _assignValue(newValue: MatSelectValue<T>): boolean {
     // Always re-assign an array, because it might have been mutated.
     if (newValue !== this._value || (this._multiple && Array.isArray(newValue))) {
       if (this.options) {
@@ -1201,7 +1205,7 @@ export class MatSelect
   //
   // The user can focus disabled options using the keyboard, but the user cannot click disabled
   // options.
-  private _skipPredicate = (option: MatOption) => {
+  private _skipPredicate = (option: MatOption<T>) => {
     if (this.panelOpen) {
       // Support keyboard focusing disabled options in an ARIA listbox.
       return false;
@@ -1238,7 +1242,7 @@ export class MatSelect
 
   /** Sets up a key manager to listen to keyboard events on the overlay panel. */
   private _initKeyManager() {
-    this._keyManager = new ActiveDescendantKeyManager<MatOption>(this.options)
+    this._keyManager = new ActiveDescendantKeyManager<MatOption<T>>(this.options)
       .withTypeAhead(this.typeaheadDebounceInterval)
       .withVerticalOrientation()
       .withHorizontalOrientation(this._isRtl() ? 'rtl' : 'ltr')
@@ -1298,7 +1302,7 @@ export class MatSelect
   }
 
   /** Invoked when an option is clicked. */
-  private _onSelect(option: MatOption, isUserInput: boolean): void {
+  private _onSelect(option: MatOption<T>, isUserInput: boolean): void {
     const wasSelected = this._selectionModel.isSelected(option);
 
     if (!this.canSelectNullableOptions && option.value == null && !this._multiple) {
@@ -1333,7 +1337,7 @@ export class MatSelect
     }
 
     if (wasSelected !== this._selectionModel.isSelected(option)) {
-      this._propagateChanges();
+      this._propagateChanges(option.value);
     }
 
     this.stateChanges.next();
@@ -1354,13 +1358,13 @@ export class MatSelect
   }
 
   /** Emits change event to set the model value. */
-  private _propagateChanges(fallbackValue?: any): void {
-    let valueToEmit: any;
+  private _propagateChanges(fallbackValue: T): void {
+    let valueToEmit: MatSelectValue<T>;
 
     if (this.multiple) {
-      valueToEmit = (this.selected as MatOption[]).map(option => option.value);
+      valueToEmit = (this.selected as MatOption<T>[]).map(option => option.value);
     } else {
-      valueToEmit = this.selected ? (this.selected as MatOption).value : fallbackValue;
+      valueToEmit = this.selected ? (this.selected as MatOption<T>).value : fallbackValue;
     }
 
     this._value = valueToEmit;
