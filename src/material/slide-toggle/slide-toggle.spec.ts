@@ -34,7 +34,7 @@ describe('MatSlideToggle without forms', () => {
   });
 
   describe('basic behavior', () => {
-    let fixture: ComponentFixture<any>;
+    let fixture: ComponentFixture<SlideToggleBasic>;
 
     let testComponent: SlideToggleBasic;
     let slideToggle: MatSlideToggle;
@@ -777,7 +777,7 @@ describe('MatSlideToggle with forms', () => {
   });
 
   describe('with form element', () => {
-    let fixture: ComponentFixture<any>;
+    let fixture: ComponentFixture<SlideToggleWithForm>;
     let testComponent: SlideToggleWithForm;
     let buttonElement: HTMLButtonElement;
 

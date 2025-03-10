@@ -101,7 +101,7 @@ export class MatSlideToggle
   protected _changeDetectorRef = inject(ChangeDetectorRef);
   defaults = inject<MatSlideToggleDefaultOptions>(MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS);
 
-  private _onChange = (_: any) => {};
+  private _onChange = (_: boolean) => {};
   private _onTouched = () => {};
   private _validatorOnChange = () => {};
 
@@ -254,17 +254,17 @@ export class MatSlideToggle
   }
 
   /** Implemented as part of ControlValueAccessor. */
-  writeValue(value: any): void {
+  writeValue(value: unknown): void {
     this.checked = !!value;
   }
 
   /** Implemented as part of ControlValueAccessor. */
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (x: boolean) => unknown): void {
     this._onChange = fn;
   }
 
   /** Implemented as part of ControlValueAccessor. */
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => unknown): void {
     this._onTouched = fn;
   }
 
