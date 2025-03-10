@@ -19,6 +19,7 @@ import {
   numberAttribute,
   OnDestroy,
   Output,
+  Provider,
   Renderer2,
   signal,
 } from '@angular/core';
@@ -40,7 +41,7 @@ import {Platform} from '@angular/cdk/platform';
  * Provider that allows the slider thumb to register as a ControlValueAccessor.
  * @docs-private
  */
-export const MAT_SLIDER_THUMB_VALUE_ACCESSOR: any = {
+export const MAT_SLIDER_THUMB_VALUE_ACCESSOR: Provider = {
   provide: NG_VALUE_ACCESSOR,
   useExisting: forwardRef(() => MatSliderThumb),
   multi: true,
@@ -50,7 +51,7 @@ export const MAT_SLIDER_THUMB_VALUE_ACCESSOR: any = {
  * Provider that allows the range slider thumb to register as a ControlValueAccessor.
  * @docs-private
  */
-export const MAT_SLIDER_RANGE_THUMB_VALUE_ACCESSOR: any = {
+export const MAT_SLIDER_RANGE_THUMB_VALUE_ACCESSOR: Provider = {
   provide: NG_VALUE_ACCESSOR,
   useExisting: forwardRef(() => MatSliderRangeThumb),
   multi: true,
@@ -263,7 +264,7 @@ export class MatSliderThumb implements _MatSliderThumb, OnDestroy, ControlValueA
   _skipUIUpdate: boolean = false;
 
   /** Callback called when the slider input value changes. */
-  protected _onChangeFn: ((value: any) => void) | undefined;
+  protected _onChangeFn: ((value: number) => void) | undefined;
 
   /** Callback called when the slider input has been touched. */
   private _onTouchedFn: () => void = () => {};
@@ -558,9 +559,9 @@ export class MatSliderThumb implements _MatSliderThumb, OnDestroy, ControlValueA
    * @param value The new value of the input
    * @docs-private
    */
-  writeValue(value: any): void {
+  writeValue(value: unknown): void {
     if (this._isControlInitialized || value !== null) {
-      this.value = value;
+      this.value = value as number;
     }
   }
 
@@ -569,7 +570,7 @@ export class MatSliderThumb implements _MatSliderThumb, OnDestroy, ControlValueA
    * @param fn The callback to register
    * @docs-private
    */
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: number) => unknown): void {
     this._onChangeFn = fn;
     this._isControlInitialized = true;
   }
@@ -579,7 +580,7 @@ export class MatSliderThumb implements _MatSliderThumb, OnDestroy, ControlValueA
    * @param fn The callback to register
    * @docs-private
    */
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => unknown): void {
     this._onTouchedFn = fn;
   }
 
@@ -812,9 +813,9 @@ export class MatSliderRangeThumb extends MatSliderThumb implements _MatSliderRan
    * @param value The new value of the input
    * @docs-private
    */
-  override writeValue(value: any): void {
+  override writeValue(value: unknown): void {
     if (this._isControlInitialized || value !== null) {
-      this.value = value;
+      this.value = value as number;
       this._updateWidthInactive();
       this._updateSibling();
     }
