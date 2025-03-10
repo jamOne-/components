@@ -259,7 +259,7 @@ export class MatSlideToggle
   }
 
   /** Implemented as part of ControlValueAccessor. */
-  registerOnChange(fn: (x: boolean) => unknown): void {
+  registerOnChange(fn: (value: boolean) => unknown): void {
     this._onChange = fn;
   }
 
